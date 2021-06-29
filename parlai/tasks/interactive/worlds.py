@@ -94,3 +94,45 @@ class InteractiveWorld(DialogPartnerWorld):
         if act['episode_done']:
             self.finalize_episode()
             self.turn_cnt = 0
+
+    def parley(self, response_text):
+        """
+        Agent 0 goes first.
+
+        Alternate between the two agents.
+        """
+        if self.turn_cnt == 0:
+            self.p1, self.p2 = self.get_contexts()
+
+        acts = self.acts
+        agents = self.agents
+        if self.turn_cnt == 0 and self.p1 != '':
+            # add the context on to the first message to agent 0
+            context_act = Message(
+                {'id': 'context', 'text': self.p1, 'episode_done': False}
+            )
+            agents[0].observe(validate(context_act))
+        try:
+            #act = deepcopy(agents[0].act())
+            act = deepcopy(agents[0].act(response_text))
+        except StopIteration:
+            self.reset()
+            self.finalize_episode()
+            self.turn_cnt = 0
+            return
+        acts[0] = act
+        if self.turn_cnt == 0 and self.p2 != '':
+            # add the context on to the first message to agent 1
+            context_act = Message(
+                {'id': 'context', 'text': self.p2, 'episode_done': False}
+            )
+            agents[1].observe(validate(context_act))
+        agents[1].observe(validate(act))
+        acts[1] = agents[1].act()
+        agents[0].observe(validate(acts[1]))
+        self.update_counters()
+        self.turn_cnt += 1
+
+        if act['episode_done']:
+            self.finalize_episode()
+            self.turn_cnt = 0

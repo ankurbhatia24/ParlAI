@@ -95,6 +95,7 @@ class World(object):
 
         This is empty in the base class.
         """
+        print("++++++++Calling World Parley+++++++")
         # TODO: mark as abstract?
         pass
 
@@ -355,6 +356,7 @@ class DialogPartnerWorld(World):
 
         Alternate between the two agents.
         """
+        print("+++++++calling DialogPartnerWorld Parley+++++")
         acts = self.acts
         agents = self.agents
         acts[0] = agents[0].act()
@@ -456,6 +458,9 @@ class MultiAgentDialogWorld(World):
         For each agent, get an observation of the last action each of the other agents
         took. Then take an action yourself.
         """
+
+        print("+++++++calling MultiAgentDialogWorld+++++")
+
         acts = self.acts
         for index, agent in enumerate(self.agents):
             acts[index] = agent.act()

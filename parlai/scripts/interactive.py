@@ -79,7 +79,7 @@ def interactive(opt):
     if isinstance(opt, ParlaiParser):
         logging.error('interactive should be passed opt not Parser')
         opt = opt.parse_args()
-
+    print(opt)
     # Create model and assign it to the specified task
     agent = create_agent(opt, requireModelExists=True)
     agent.opt.log()

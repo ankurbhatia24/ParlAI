@@ -58,12 +58,15 @@ def setup_args():
 def display_model(opt):
     random.seed(42)
 
+    print("++++++++++++++++++OPT IS ++++++++++++++++", opt)
+
     # Create model and assign it to the specified task
     agent = create_agent(opt)
     world = create_task(opt, agent)
     agent.opt.log()
 
     # Show some example dialogs.
+
     turn = 0
     with world:
         for _k in range(int(opt['num_examples'])):
