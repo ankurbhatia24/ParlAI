@@ -36,6 +36,7 @@ from parlai.core.message import Message
 from parlai.utils.distributed import is_distributed
 from parlai.utils.misc import AttrDict, warn_once
 from parlai.utils.io import PathManager
+from parlai.utils.fsdp import should_sync_gradnorm, is_fsdp, DEFAULT_DDP_BACKEND
 from parlai.utils.fp16 import (
     SafeFP16Optimizer,
     MemoryEfficientFP16Optimizer,
@@ -955,7 +956,13 @@ class TorchAgent(ABC, Agent):
         is_train = 'train' in datatype and 'evalmode' not in datatype
         return is_train
 
-    def init_optim(self, params, optim_states=None, saved_optim_type=None) -> bool:
+    def init_optim(
+        self,
+        params,
+        optim_states=None,
+        saved_optim_type=None,
+        is_finetune: bool = False,
+    ) -> bool:
         """
         Initialize optimizer with model parameters.
 
@@ -969,10 +976,14 @@ class TorchAgent(ABC, Agent):
             type of optimizer being loaded, if changed will skip loading
             optimizer states
 
+        :param is_finetune:
+            bool indicating whether this training run is a fine-tune or not
+
         :returns:
-            boolean indicating whether the optimizer was initialized with
+            boolean indicating whether the optimizer failed to initialize with
             optim_states.
         """
+
         if hasattr(self, 'resized_embeddings') and self.resized_embeddings:
             optim_states = None
             logging.warning('Not loading optimizer due to resize in token embeddings')
@@ -1042,7 +1053,9 @@ class TorchAgent(ABC, Agent):
         self.optimizer = optim_class(params, **kwargs)
         if self.fp16:
             if self.fp16_impl == 'safe':
-                self.optimizer = SafeFP16Optimizer(self.optimizer)
+                self.optimizer = SafeFP16Optimizer(
+                    self.optimizer, should_sync_gradnorm(opt)
+                )
             else:
                 # Using memory efficient optimizer
                 opt_name = opt['optimizer']
@@ -1054,15 +1067,18 @@ class TorchAgent(ABC, Agent):
                         'with Memory Efficient FP16. Please select from among this '
                         f'list:\n{compatible_list}'
                     )
-                self.optimizer = MemoryEfficientFP16Optimizer(self.optimizer)
-        # TODO: we might want to hard reset optimizers here in the
-        # case of fine tuning. Some rudimentary experiments seemed to
-        # indicate that keeping adam weights around was desirable, so this
-        # will remain the behavior for the time being.
+                self.optimizer = MemoryEfficientFP16Optimizer(
+                    self.optimizer, should_sync_gradnorm(opt)
+                )
+
+        if is_finetune:
+            logging.warning('Detected a fine-tune run. Resetting the optimizer.')
+            return True
+
         if optim_states and saved_optim_type != opt['optimizer']:
             # we changed from adam to adamax, or sgd to adam, or similar
             logging.warning('Not loading optim state since optim class changed.')
-            return False
+            return True
         elif optim_states:
             # check for any fp16/fp32 conversions we need to do
             optimstate_fp16 = 'loss_scaler' in optim_states
@@ -1081,11 +1097,12 @@ class TorchAgent(ABC, Agent):
                 # this is a bit clunky, but alternatives are worse
                 try:
                     self.optimizer.load_state_dict(optim_states)
+                    return False
                 except ValueError:
                     warn_once(
                         'WARNING: not loading optim state since model params changed.'
                     )
-                return True
+                    return True
             else:
                 # previously trained in fp32, loading in fp32.
                 # no special treatment needed.
@@ -1099,7 +1116,7 @@ class TorchAgent(ABC, Agent):
                 warn_once(
                     'WARNING: not loading optim state since model params changed.'
                 )
-                return False
+                return True
 
     def build_lr_scheduler(self, states=None, hard_reset=False):
         """
@@ -1498,7 +1515,11 @@ class TorchAgent(ABC, Agent):
             # pick one label if there are multiple
             lbls = obs[label_type]
             label = lbls[0] if len(lbls) == 1 else self.random.choice(lbls)
-            vec_label, vec_label_length, vec_label_truncated = self._vectorize_text_with_truncate_stats(
+            (
+                vec_label,
+                vec_label_length,
+                vec_label_truncated,
+            ) = self._vectorize_text_with_truncate_stats(
                 label, add_start, add_end, truncate, False
             )
             obs.force_set('label_original_length', vec_label_length)
@@ -1957,10 +1978,11 @@ class TorchAgent(ABC, Agent):
         """
         states = {}
         if hasattr(self, 'model'):  # save model params
-            if hasattr(self.model, 'module'):
-                # did we wrap in a DistributedDataParallel
+            if hasattr(self.model, 'module') and not is_fsdp(self.model):
+                # did we wrap in a DistributedDataParallel or DataParallel
                 states['model'] = self.model.module.state_dict()
             else:
+                # regular model or FSDP
                 states['model'] = self.model.state_dict()
 
         if hasattr(self, 'optimizer'):
@@ -1979,6 +2001,16 @@ class TorchAgent(ABC, Agent):
             states['warmup_scheduler'] = self.scheduler.get_warmup_state_dict()
 
         return states
+
+    def save_nonprimary(self, path=None):
+        """
+        Save model parameters, when you are working on the non-primary worker.
+
+        For models or optimizers that shard parameters, this ensures we sync.
+        """
+        if self.opt.get('ddp_backend', DEFAULT_DDP_BACKEND) in ('zero2', 'zero3'):
+            # make sure we call the state dict
+            self.state_dict()
 
     def save(self, path=None):
         """

@@ -219,6 +219,7 @@ class BaseModelChatBlueprint(ParlAIChatBlueprint, ABC):
         left_pane_path = os.path.expanduser(args.blueprint.left_pane_text_path)
         with open(left_pane_path, "r") as left_pane_file:
             self.left_pane_text = left_pane_file.read()
+        self.format_left_pane_text(args)
         self.annotations_config: Optional[str] = None
         if args.blueprint.get("annotations_config_path", "") != "":
             annotations_config_path = os.path.expanduser(
@@ -252,6 +253,12 @@ class BaseModelChatBlueprint(ParlAIChatBlueprint, ABC):
                 'chat_data_folder': args.blueprint.chat_data_folder,
             }
         )
+
+    def format_left_pane_text(self, args: "DictConfig"):
+        """
+        Modifies self.left_pane_text for code injection.
+        """
+        pass
 
     @abstractmethod
     def _get_shared_models(self, args: "DictConfig") -> Dict[str, dict]:
@@ -393,13 +400,7 @@ class ModelChatBlueprint(BaseModelChatBlueprint):
         self, task_run: "TaskRun", args: "DictConfig", shared_state: "SharedTaskState"
     ):
 
-        # Set the number of conversations needed
-        conversations_needed_string = args.blueprint.conversations_needed_string
-        conversations_needed = {}
-        parts = conversations_needed_string.split(',')
-        for part in parts:
-            model_name, num_string = part.split(':')
-            conversations_needed[model_name] = int(num_string)
+        conversations_needed = self._process_conversations_needed(args)
         self.conversations_needed = conversations_needed
         shared_state.conversations_needed = conversations_needed
         args.blueprint.num_conversations = sum(conversations_needed.values())
@@ -452,6 +453,20 @@ class ModelChatBlueprint(BaseModelChatBlueprint):
                 'include_persona': args.blueprint.include_persona,
             }
         )
+
+    def _process_conversations_needed(self, args: "DictConfig") -> Dict[str, int]:
+        """
+        Set the number of conversations needed.
+        """
+
+        conversations_needed_string = args.blueprint.conversations_needed_string
+        conversations_needed = {}
+        parts = conversations_needed_string.split(',')
+        for part in parts:
+            model_name, num_string = part.split(':')
+            conversations_needed[model_name] = int(num_string)
+
+        return conversations_needed
 
     def _get_shared_models(self, args: "DictConfig") -> Dict[str, dict]:
         with open(args.blueprint.model_opt_path) as f:
