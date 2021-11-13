@@ -103,7 +103,7 @@ class RagModelInterface(ABC):
     def __init__(self, opt: Opt, null_idx: int):
         self.opt = opt
         self.generation_model = opt['generation_model']
-        self.thorough = opt['thorough']
+        self.thorough = True#opt['thorough']
         self.n_docs = opt['n_docs']
         self.null_idx = null_idx
 
@@ -396,6 +396,7 @@ class RagSequence(RagModelInterface):
         doc_log_probs = batch.doc_log_probs  # type: ignore
         bsz, n_docs = doc_log_probs.shape
         for i in range(bsz):
+            print('hibcjdbjbdvjcb')
             if self.thorough:
                 hyps = [
                     hyp[0]
@@ -517,7 +518,10 @@ class RagSequence(RagModelInterface):
             hyps, fp16friendly=new_input.size(1) % FP16_PAD_SIZE == 0, pad_idx=null_idx
         )
         new_ys = new_ys.to(new_input.device)
-        scores, *_ = model.seq2seq_forward_pass(new_input, new_ys)
+        #scores, *_ = model.seq2seq_forward_pass(new_input, new_ys)
+        
+        scores, s = model.seq2seq_forward_pass(new_input, new_ys)
+        print(s.keys())
         loss = cls._rag_sequence_loss(
             new_ys.unsqueeze(1).unsqueeze(-1), scores.unsqueeze(1), null_idx
         )  # type: ignore

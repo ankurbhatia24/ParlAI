@@ -76,6 +76,7 @@ def setup_args(parser=None):
 
 
 def interactive(opt):
+
     if isinstance(opt, ParlaiParser):
         logging.error('interactive should be passed opt not Parser')
         opt = opt.parse_args()

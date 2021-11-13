@@ -142,9 +142,31 @@ class InteractiveWorld(InteractiveBaseWorld):
     def init_contexts(self, shared=None):
         self.contexts_data = get_contexts_data(self.opt, shared=shared)
 
-    def get_contexts(self):
+    def get_contexts(self, model_persona_):
         random.seed()
-        p = random.choice(self.contexts_data)
+        if model_persona_ == None:
+            p = random.choice(self.contexts_data)
+        else:
+            p = random.choice(self.contexts_data)
+            p[1] = model_persona_  #Model persona
+
+        # p = ['your persona: my mother was a teacher.\
+        # \nyour persona: we lived in virginia while i was growing up.\
+        # \nStamp collecting', 'your persona: My name is Narendra Modi.\
+        # \nyour persona: I am the Prime Minister of India.\nyour persona: I will blow up pakistan.']
+
+        #p[1] is the persona of the model agent
+        #p[0] is the persona of the Human Agent (or any other agent acc to model config)
+
+        # print("Enter Persona 3 times.")
+        # str_ = "your persona: "
+        # for i in range(3):
+        #     persona_ = input()
+        #     if persona_ != "[EXIT]":
+        #         str_ += persona_
+        #         str_ += "\nyour persona: "
+        # print(str_)
+        # p[1] = str_
         return p[0], p[1]
 
     def finalize_episode(self):

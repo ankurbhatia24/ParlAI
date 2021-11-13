@@ -68,11 +68,41 @@ class LocalHumanAgent(Agent):
             )
         )
 
-    def act(self):
+    # def act(self):
+    #     reply = Message()
+    #     reply['id'] = self.getID()
+    #     try:
+    #         reply_text = input(colorize("Enter Your Message:", 'text') + ' ')
+    #     except EOFError:
+    #         self.finished = True
+    #         return {'episode_done': True}
+
+    #     reply_text = reply_text.replace('\\n', '\n')
+    #     reply['episode_done'] = False
+    #     if self.opt.get('single_turn', False):
+    #         reply.force_set('episode_done', True)
+    #     reply['label_candidates'] = self.fixedCands_txt
+    #     if '[DONE]' in reply_text:
+    #         # let interactive know we're resetting
+    #         raise StopIteration
+    #     reply['text'] = reply_text
+    #     if '[EXIT]' in reply_text:
+    #         self.finished = True
+    #         raise StopIteration
+    #     return reply
+
+
+    #Methods cannot be overloaded in python since these methods are basically object attributes in python
+    #unkie C++ or Java
+    #So we can give a default argument to the parameter to make it work as wanted.
+    def act(self, response_text = None): #Added
         reply = Message()
         reply['id'] = self.getID()
         try:
-            reply_text = input(colorize("Enter Your Message:", 'text') + ' ')
+            if response_text != None:
+                reply_text = response_text
+            else:
+                reply_text = input(colorize("Enter Your Message:", 'text') + ' ')
         except EOFError:
             self.finished = True
             return {'episode_done': True}

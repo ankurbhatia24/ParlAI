@@ -465,6 +465,7 @@ def create_agent(opt: Opt, requireModelExists=False):
             )
         # Attempt to load the model from the model file first (this way we do
         # not even have to specify the model name as a parameter)
+        print(opt)
         model = create_agent_from_opt_file(opt)
         if model is not None:
             return model
