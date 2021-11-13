@@ -1,0 +1,31 @@
+#!/bin/bash
+echo -e "Hello, $(whoami)!\n"
+echo -e "Setting up the FastSpeech Virtual Environment\n"
+cd /datadrive/ankur/FastSpeech
+source /datadrive/ankur/fs3/bin/activate
+echo -e "Setting up FastSpeech API \n"
+echo -e "FastSpeech API: Press 1 to run on GPU or 0 to run on CPU\n"
+read cuda_device
+if [ $cuda_device -eq 0 ]
+then
+    echo -e "Starting API with CPU \n"
+    echo -e "Press ENTER \n"
+    $(CUDA_VISIBLE_DEVICES=-1 nohup python /datadrive/ankur/FastSpeech/FastSpeech_tts_api_server.py & > nohup_fs.out)
+    
+else
+    echo -e "Starting API on GPU \n"
+    echo -e "Press ENTER \n"
+    $(CUDA_VISIBLE_DEVICES=1 nohup python /datadrive/ankur/FastSpeech/FastSpeech_tts_api_server.py & > nohup_parlai.out)
+    
+fi
+source /datadrive/ankur/fs3/bin/deactivate
+
+echo -e "Setting up the Parlai Virtual environment for Blenderbot2.0\n"
+cd /datadrive/ankur
+$(conda activate /anaconda/envs/audio_chat_bot)
+echo -e "Setting up Parlai API on GPU"
+echo -e "Press ENTER \n"
+$(CUDA_VISIBLE_DEVICES=1 nohup python /datadrive/ankur/parley_api &)
+$(conda deactivate)
+cd
+# NGROK Servers are already on port 5001 for FastSpeech and 5000 for Parley
