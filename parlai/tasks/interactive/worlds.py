@@ -136,3 +136,15 @@ class InteractiveWorld(DialogPartnerWorld):
         if act['episode_done']:
             self.finalize_episode()
             self.turn_cnt = 0
+
+# parlai train_model -t blended_skill_talk,wizard_of_wikipedia,convai2:normalized -m transformer/generator --multitask-weights 1,3,3,3 --init-model zoo:blender/blender_90M/model --dict-file zoo:blender/blender_90M/model.dict --embedding-size 512 --n-layers 8 --ffn-size 2048 --dropout 0.1 --n-heads 16 --learn-positional-embeddings True --n-positions 512 --variant xlm --activation gelu --fp16 True --text-truncate 512 --label-truncate 128 --dict-tokenizer bpe --dict-lower True -lr 1e-06 --optimizer adamax --lr-scheduler reduceonplateau --gradient-clip 0.1 -veps 0.25 --betas 0.9,0.999 --update-freq 1 --attention-dropout 0.0 --relu-dropout 0.0 --skip-generation True -vp 15 -stim 60 -vme 20000 -bs 16 -vmt ppl -vmm min --save-after-valid True --model-file /home/azureuser/ankur/testmodel/model_90M/test_train_90M
+
+# parlai train_model -t jsonfile --jsonfile-datapath "/home/azureuser/ankur/test.json" -m transformer/generator  --init-model zoo:blender/blender_90M/model --dict-file zoo:blender/blender_90M/model.dict --embedding-size 512 --n-layers 8 --ffn-size 2048 --dropout 0.1 --n-heads 16 --learn-positional-embeddings True --n-positions 512 --variant xlm --activation gelu --fp16 True --text-truncate 512 --label-truncate 128 --dict-tokenizer bpe --dict-lower True -lr 1e-06 --optimizer adamax --lr-scheduler reduceonplateau --gradient-clip 0.1 -veps 0.25 --betas 0.9,0.999 --update-freq 1 --attention-dropout 0.0 --relu-dropout 0.0 --skip-generation True -vp 15 -stim 60 -vme 20000 -bs 16 -vmt ppl -vmm min --save-after-valid True --model-file /home/azureuser/ankur/testmodel/model_90M/test_train_90M_v2 --epochs
+
+# parlai train_model -t fromfile:parlaiformat --fromfile_datapath "/home/azureuser/ankur/aadhar.txt" -m transformer/generator  --init-model zoo:blender/blender_90M/model --dict-file zoo:blender/blender_90M/model.dict --embedding-size 512 --n-layers 8 --ffn-size 2048 --dropout 0.1 --n-heads 16 --learn-positional-embeddings True --n-positions 512 --variant xlm --activation gelu --fp16 True --text-truncate 512 --label-truncate 128 --dict-tokenizer bpe --dict-lower True -lr 1e-06 --optimizer adamax --lr-scheduler reduceonplateau --gradient-clip 0.1 -veps 0.25 --betas 0.9,0.999 --update-freq 1 --attention-dropout 0.0 --relu-dropout 0.0 --skip-generation True -vp 15 -stim 60 -vme 20000 -bs 16 -vmt ppl -vmm min --save-after-valid True --model-file /home/azureuser/ankur/testmodel/model_90M/test_train_90M_v2 --epochs
+
+
+# { "dialog": [ [  {"id": "partner1", "text": "hello how are you today?"},  
+#                 {"id": "partner2", "text": "i'm great thanks! what are you doing?"},  
+#                 {"id": "partner1", "text": "i've just been bikinig."},        
+#                 {"id": "partner2", "text": "oh nice, i haven't got on a bike in years!"} ] ]}

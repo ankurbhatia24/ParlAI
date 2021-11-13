@@ -75,6 +75,7 @@ class World(object):
     """
 
     def __init__(self, opt: Opt, agents=None, shared=None):
+        print("I am in world")
         self.id = opt['task']
         self.opt = copy.deepcopy(opt)
         if shared:
@@ -322,6 +323,7 @@ class DialogPartnerWorld(World):
         return parser
 
     def __init__(self, opt: Opt, agents=None, shared=None):
+        print("I am in dialog")
         if not ((agents is not None) ^ (shared is not None)):
             raise ValueError('You must supply either agents or shared, but not both.')
         super().__init__(opt)
@@ -350,7 +352,24 @@ class DialogPartnerWorld(World):
         """
         return self.get_agents()[1]
 
-    def parley(self):
+
+    # def parley(self):
+    #     """
+    #     Agent 0 goes first.
+
+    #     Alternate between the two agents.
+    #     """
+    #     print("+++++++calling DialogPartnerWorld Parley+++++")
+    #     acts = self.acts
+    #     agents = self.agents
+    #     acts[0] = agents[0].act()
+    #     agents[1].observe(validate(acts[0]))
+    #     acts[1] = agents[1].act()
+    #     agents[0].observe(validate(acts[1]))
+    #     self.update_counters()
+
+
+    def parley(self, response_text):
         """
         Agent 0 goes first.
 
@@ -359,7 +378,7 @@ class DialogPartnerWorld(World):
         print("+++++++calling DialogPartnerWorld Parley+++++")
         acts = self.acts
         agents = self.agents
-        acts[0] = agents[0].act()
+        acts[0] = agents[0].act(response_text)
         agents[1].observe(validate(acts[0]))
         acts[1] = agents[1].act()
         agents[0].observe(validate(acts[1]))

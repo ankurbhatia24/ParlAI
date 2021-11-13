@@ -929,6 +929,7 @@ class TrainModel(ParlaiScript):
         return setup_args()
 
     def run(self):
+        print(self.opt)
         self.train_loop = TrainLoop(self.opt)
         return self.train_loop.train()
 

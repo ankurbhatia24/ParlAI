@@ -44,6 +44,7 @@ class LocalHumanAgent(Agent):
 
     def __init__(self, opt, shared=None):
         super().__init__(opt)
+        print("Yeah this is local agent")
         self.id = 'localHuman'
         self.episodeDone = False
         self.finished = False
@@ -68,28 +69,28 @@ class LocalHumanAgent(Agent):
             )
         )
 
-    def act(self):
-        reply = Message()
-        reply['id'] = self.getID()
-        try:
-            reply_text = input(colorize("Enter Your Message:", 'text') + ' ')
-        except EOFError:
-            self.finished = True
-            return {'episode_done': True}
+    # def act(self):
+    #     reply = Message()
+    #     reply['id'] = self.getID()
+    #     try:
+    #         reply_text = input(colorize("Enter Your Message:", 'text') + ' ')
+    #     except EOFError:
+    #         self.finished = True
+    #         return {'episode_done': True}
 
-        reply_text = reply_text.replace('\\n', '\n')
-        reply['episode_done'] = False
-        if self.opt.get('single_turn', False):
-            reply.force_set('episode_done', True)
-        reply['label_candidates'] = self.fixedCands_txt
-        if '[DONE]' in reply_text:
-            # let interactive know we're resetting
-            raise StopIteration
-        reply['text'] = reply_text
-        if '[EXIT]' in reply_text:
-            self.finished = True
-            raise StopIteration
-        return reply
+    #     reply_text = reply_text.replace('\\n', '\n')
+    #     reply['episode_done'] = False
+    #     if self.opt.get('single_turn', False):
+    #         reply.force_set('episode_done', True)
+    #     reply['label_candidates'] = self.fixedCands_txt
+    #     if '[DONE]' in reply_text:
+    #         # let interactive know we're resetting
+    #         raise StopIteration
+    #     reply['text'] = reply_text
+    #     if '[EXIT]' in reply_text:
+    #         self.finished = True
+    #         raise StopIteration
+    #     return reply
 
     def act(self, response_text): #Added
         reply = Message()
